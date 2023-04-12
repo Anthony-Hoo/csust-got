@@ -43,6 +43,7 @@ func main() {
 	// bot.Handle("/iwatch", util.PrivateCommand(iwatch.WatchHandler))
 	bot.Handle("/sd", sd.Handler)
 	bot.Handle("/sdcfg", sd.ConfigHandler)
+	bot.Handle("/sdlast", sd.LastPromptHandler)
 
 	go sd.Process()
 
@@ -127,10 +128,12 @@ func registerBaseHandler(bot *Bot) {
 
 	bot.Handle("/getvoice_old", base.GetVoice)
 	bot.Handle("/getvoice", base.GetVoiceV2)
-	bot.Handle("/genvoice", base.GetVoiceV3)
+	bot.Handle("/genvoice", base.GetVoiceV3, whiteMiddleware)
+	bot.Handle("/provoice", base.GetVoiceV3Pro, whiteMiddleware)
 
 	bot.Handle("/chat", chat.GPTChat, whiteMiddleware)
 	bot.Handle("/chats", chat.GPTChatWithStream, whiteMiddleware)
+	bot.Handle("/qiuchat", chat.Cust, whiteMiddleware)
 }
 
 func registerRestrictHandler(bot *Bot) {
@@ -262,7 +265,7 @@ func promMiddleware(next HandlerFunc) HandlerFunc {
 		prom.DialContext(ctx)
 		command := entities.FromMessage(ctx.Message())
 		if command != nil {
-			log.Info("bot receive command", zap.String("chat", ctx.Chat().Title),
+			log.Debug("bot receive command", zap.String("chat", ctx.Chat().Title),
 				zap.String("user", ctx.Sender().Username), zap.String("command", ctx.Message().Text))
 		}
 		return next(ctx)
